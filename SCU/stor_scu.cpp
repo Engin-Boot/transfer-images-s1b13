@@ -768,3 +768,709 @@ static SAMP_BOOLEAN UpdateNode(InstanceNode* A_node)
 
 	return (SAMP_TRUE);
 }
+/****************************************************************************
+ *
+ *  Function    :   FreeList
+ *
+ *  Parameters  :   A_list     - Pointer to head of node list to free.
+ *
+ *  Returns     :   nothing
+ *
+ *  Description :   Free the memory allocated for a list of nodesransferred
+ *
+ ****************************************************************************/
+static void FreeList(InstanceNode** A_list)
+{
+	InstanceNode* node;
+
+	/*
+	 * Free the instance list
+	 */
+	while (*A_list)
+	{
+		node = *A_list;
+		*A_list = node->Next;
+
+		if (node->msgID != -1)
+			MC_Free_Message(&node->msgID);
+
+		free(node);
+	}
+}
+
+
+/****************************************************************************
+ *
+ *  Function    :   GetNumNodes
+ *
+ *  Parameters  :   A_list     - Pointer to head of node list to get count for
+ *
+ *  Returns     :   int, num node entries in list
+ *
+ *  Description :   Gets a count of the current list of instances.
+ *
+ ****************************************************************************/
+static int GetNumNodes(InstanceNode* A_list)
+
+{
+	int            numNodes = 0;
+	InstanceNode* node;
+
+	node = A_list;
+	while (node)
+	{
+		numNodes++;
+		node = node->Next;
+	}
+
+	return numNodes;
+}
+
+
+
+/****************************************************************************
+ *
+ *  Function    :   ReadImage
+ *
+ *  Parameters  :   A_options  - Pointer to structure containing input
+ *                               parameters to the application
+ *                  A_appID    - Application ID registered
+ *                  A_node     - The node in our list of instances
+ *
+ *  Returns     :   SAMP_TRUE
+ *                  SAMP_FALSE
+ *
+ *  Description :   Determine the format of a DICOM file and read it into
+ *                  memory.  Note that in a production application, the
+ *                  file format should be predetermined (and not have to be
+ *                  "guessed" by the CheckFileFormat function).  The
+ *                  format for this application was chosen to show how both
+ *                  DICOM Part 10 format files and "stream" format objects
+ *                  can be sent over the network.
+ *
+ ****************************************************************************/
+static void CheckFormat(FORMAT_ENUM format, SAMP_BOOLEAN* sampBool, InstanceNode* A_node, STORAGE_OPTIONS* A_options, int A_appID)
+{
+	switch (format)
+	{
+		/*case MEDIA_FORMAT:
+			A_node->mediaFormat = SAMP_TRUE;
+			*sampBool = ReadFileFromMedia(A_options, A_appID, A_node->fname, &A_node->msgID, &A_node->transferSyntax, &A_node->imageBytes);
+			break;*/
+
+	case IMPLICIT_LITTLE_ENDIAN_FORMAT:
+		/*case IMPLICIT_BIG_ENDIAN_FORMAT:
+		case EXPLICIT_LITTLE_ENDIAN_FORMAT:
+		case EXPLICIT_BIG_ENDIAN_FORMAT:*/
+		A_node->mediaFormat = SAMP_FALSE;
+		*sampBool = ReadMessageFromFile(A_options, A_node->fname, format, &A_node->msgID, &A_node->transferSyntax, &A_node->imageBytes);
+		break;
+
+	case UNKNOWN_FORMAT:
+		PrintError("Unable to determine the format of file", MC_NORMAL_COMPLETION);
+		*sampBool = SAMP_FALSE;
+		break;
+	}
+}
+static void ReadSOPClassUID(InstanceNode* A_node)
+{
+	MC_STATUS mcStatus;
+	mcStatus = MC_Get_Value_To_String(A_node->msgID, MC_ATT_SOP_CLASS_UID, sizeof(A_node->SOPClassUID), A_node->SOPClassUID);
+	if (mcStatus != MC_NORMAL_COMPLETION)
+	{
+		PrintError("MC_Get_Value_To_String for SOP Class UID failed", mcStatus);
+	}
+}
+static void ReadSOPInstanceUID(InstanceNode* A_node)
+{
+	MC_STATUS mcStatus;
+	mcStatus = MC_Get_Value_To_String(A_node->msgID, MC_ATT_SOP_INSTANCE_UID, sizeof(A_node->SOPInstanceUID), A_node->SOPInstanceUID);
+	if (mcStatus != MC_NORMAL_COMPLETION)
+	{
+		PrintError("MC_Get_Value_To_String for SOP Instance UID failed", mcStatus);
+	}
+
+}
+//(0008,0018)	SOPInstanceUID	UI	1	44	2.16.840.1.113669.11.0.0.20201004.2143131358
+static void ChangeSOPInstanceUID(InstanceNode* A_node)
+{
+	MC_STATUS mcStatus;
+
+	mcStatus = MC_Set_Value_From_String(A_node->msgID, MC_ATT_SOP_INSTANCE_UID, PatientDetails.SOPInstanceUID);
+	if (mcStatus != MC_NORMAL_COMPLETION)
+	{
+		PrintError("MC_Set_Value_To_String for Patient Name failed", mcStatus);
+	}
+}
+static void ChangePatientName(InstanceNode* A_node)
+{
+	MC_STATUS mcStatus;
+
+	mcStatus = MC_Set_Value_From_String(A_node->msgID, MC_ATT_PATIENTS_NAME, strcat(strcat(PatientDetails.FirstName, " "), PatientDetails.LastName));
+	if (mcStatus != MC_NORMAL_COMPLETION)
+	{
+		PrintError("MC_Set_Value_To_String for Patient Name failed", mcStatus);
+	}
+}
+static void ChangePatientID(InstanceNode* A_node)
+{
+	MC_STATUS mcStatus;
+	mcStatus = MC_Set_Value_From_String(A_node->msgID, MC_ATT_PATIENT_ID, PatientDetails.PatientId);
+	if (mcStatus != MC_NORMAL_COMPLETION)
+	{
+		PrintError("MC_Set_Value_To_String for Patient id failed", mcStatus);
+	}
+}
+
+static SAMP_BOOLEAN ReadImage(STORAGE_OPTIONS* A_options, int A_appID, InstanceNode* A_node)
+{
+	FORMAT_ENUM             format = UNKNOWN_FORMAT;
+	SAMP_BOOLEAN            sampBool = SAMP_FALSE;
+
+
+	format = IMPLICIT_LITTLE_ENDIAN_FORMAT;//CheckFileFormat(A_node->fname);
+	CheckFormat(format, &sampBool, A_node, A_options, A_appID);
+
+
+	if (sampBool == SAMP_TRUE)
+	{
+		ReadSOPClassUID(A_node);
+		ReadSOPInstanceUID(A_node);
+		ChangeSOPInstanceUID(A_node);
+		ChangePatientName(A_node);
+		ChangePatientID(A_node);
+	}
+	fflush(stdout);
+	return sampBool;
+}
+
+/****************************************************************************
+ *
+ *  Function    :   SendImage
+ *
+ *  Parameters  :   A_options  - Pointer to structure containing input
+ *                               parameters to the application
+ *                  A_associationID - Association ID registered
+ *                  A_node     - The node in our list of instances
+ *
+ *  Returns     :   SAMP_TRUE
+ *                  SAMP_FALSE on failure where association must be aborted
+ *
+ *  Description :   Send message containing the image in the node over
+ *                  the association.
+ *
+ *                  SAMP_TRUE is returned on success, or when a recoverable
+ *                  error occurs.
+ *
+ ****************************************************************************/
+
+static SAMP_BOOLEAN SendImage(STORAGE_OPTIONS* A_options, int A_associationID, InstanceNode* A_node)
+{
+	MC_STATUS mcStatus;
+	SAMP_BOOLEAN sampBool = SAMP_TRUE;
+
+
+
+	A_node->imageSent = SAMP_FALSE;
+
+
+
+	/* Get the SOP class UID and set the service */
+	mcStatus = MC_Get_MergeCOM_Service(A_node->SOPClassUID, A_node->serviceName, sizeof(A_node->serviceName));
+
+
+
+	if (mcStatus != MC_NORMAL_COMPLETION)
+	{
+		PrintError("MC_Get_MergeCOM_Service failed", mcStatus);
+		fflush(stdout);
+		return (SAMP_TRUE);
+	}
+
+
+
+	mcStatus = MC_Set_Service_Command(A_node->msgID, A_node->serviceName, C_STORE_RQ);
+	if (mcStatus != MC_NORMAL_COMPLETION)
+	{
+		PrintError("MC_Set_Service_Command failed", mcStatus);
+		fflush(stdout);
+		return (SAMP_TRUE);
+	}
+
+
+
+	/* set affected SOP Instance UID */
+	mcStatus = MC_Set_Value_From_String(A_node->msgID, MC_ATT_AFFECTED_SOP_INSTANCE_UID, A_node->SOPInstanceUID);
+
+
+
+	sampBool = SendImageSetSOPInstanceUID(mcStatus);
+
+	sampBool = SendImageRequestMessage(A_options, A_associationID, A_node);
+
+
+
+
+
+
+	A_node->imageSent = SAMP_TRUE;
+	fflush(stdout);
+
+
+
+	return sampBool;
+}
+
+static SAMP_BOOLEAN SendImageSetSOPInstanceUID(MC_STATUS mcStatus)
+{
+	if (mcStatus != MC_NORMAL_COMPLETION)
+	{
+		PrintError("MC_Set_Value_From_String failed for affected SOP Instance UID", mcStatus);
+		fflush(stdout);
+		return (SAMP_TRUE);
+	}
+
+
+
+	return SAMP_FALSE;
+}
+
+int FindErrorChecker(int* a, MC_STATUS mcStatus)
+{
+	int i = 0;
+	while (a[i]) {
+		if (mcStatus == a[i]) {
+			return 1;
+		}
+		i++;
+	}
+	return 0;
+}
+
+static SAMP_BOOLEAN SendImageRequestMessage(STORAGE_OPTIONS* A_options, int A_associationID, InstanceNode* A_node)
+{
+	MC_STATUS mcStatus;
+	mcStatus = MC_Send_Request_Message(A_associationID, A_node->msgID);
+	int ErrorChecker[] = { MC_ASSOCIATION_ABORTED ,MC_SYSTEM_ERROR ,MC_UNACCEPTABLE_SERVICE };
+	//(mcStatus == MC_ASSOCIATION_ABORTED) || (mcStatus == MC_SYSTEM_ERROR) || (mcStatus == MC_UNACCEPTABLE_SERVICE)
+	if (FindErrorChecker(ErrorChecker, mcStatus))
+	{
+		/* At this point, the association has been dropped, or we should drop it in the case of error. */
+		PrintError("MC_Send_Request_Message failed", mcStatus);
+		fflush(stdout);
+		return (SAMP_FALSE);
+	}
+	else if (mcStatus != MC_NORMAL_COMPLETION)
+	{
+		/* This is a failure condition we can continue with */
+		PrintError("Warning: MC_Send_Request_Message failed", mcStatus);
+		fflush(stdout);
+		return (SAMP_TRUE);
+	}
+
+
+
+	return SAMP_TRUE;
+}
+
+/****************************************************************************
+ *
+ *  Function    :   ReadMessageFromFile
+ *
+ *  Parameters  :   A_options  - Pointer to structure containing input
+ *                               parameters to the application
+ *                  A_filename - Name of file to open
+ *                  A_format   - Enum containing the format of the object
+ *                  A_msgID    - The message ID of the message to be opened
+ *                               returned here.
+ *                  A_syntax   - The transfer syntax read is returned here.
+ *                  A_bytesRead- Total number of bytes read in image.  Used
+ *                               only for display and to calculate the
+ *                               transfer rate.
+ *
+ *  Returns     :   SAMP_TRUE  on success
+ *                  SAMP_FALSE on failure to open the file
+ *
+ *  Description :   This function reads a file in the DICOM "stream" format.
+ *                  This format contains no DICOM part 10 header information.
+ *                  The transfer syntax of the object is contained in the
+ *                  A_format parameter.
+ *
+ *                  When this function returns failure, the caller should
+ *                  not do any cleanup, A_msgID will not contain a valid
+ *                  message ID.
+ *
+ ****************************************************************************/
+static SAMP_BOOLEAN ReadMessageFromFile(STORAGE_OPTIONS* A_options,
+	char* A_filename,
+	FORMAT_ENUM A_format,
+	int* A_msgID,
+	TRANSFER_SYNTAX* A_syntax,
+	size_t* A_bytesRead)
+{
+
+
+
+	MC_STATUS mcStatus;
+	unsigned long errorTag = 0;
+	CBinfo callbackInfo = { 0 };
+
+	SAMP_BOOLEAN sampBool;
+
+
+
+	/*
+	* Determine the format
+	*/
+	/*switch (A_format)
+	{
+	case IMPLICIT_LITTLE_ENDIAN_FORMAT:
+	*A_syntax = IMPLICIT_LITTLE_ENDIAN;
+	break;
+	case IMPLICIT_BIG_ENDIAN_FORMAT:
+	*A_syntax = IMPLICIT_BIG_ENDIAN;
+	break;
+	case EXPLICIT_LITTLE_ENDIAN_FORMAT:
+	*A_syntax = EXPLICIT_LITTLE_ENDIAN;
+	break;
+	case EXPLICIT_BIG_ENDIAN_FORMAT:
+	*A_syntax = EXPLICIT_BIG_ENDIAN;
+	break;
+	default:
+	return SAMP_FALSE;
+	}*/
+
+
+
+	* A_syntax = IMPLICIT_LITTLE_ENDIAN;
+
+
+
+	//if (A_options->Verbose)
+	// printf("Reading DICOM \"stream\" format file in %s: %s\n", GetSyntaxDescription(*A_syntax), A_filename);
+
+
+
+	/*
+	* Open an empty message object to load the image into
+	*/
+
+	sampBool = ReadMessageFromFileEmptyMessage(A_msgID);
+	/*mcStatus = MC_Open_Empty_Message(A_msgID);
+	if (mcStatus != MC_NORMAL_COMPLETION)
+	{
+	PrintError("Unable to open empty message", mcStatus);
+	fflush(stdout);
+	return SAMP_FALSE;
+	}*/
+
+
+
+	/*
+	* Open and stream message from file
+	*/
+
+
+
+	//sampBool = ReadMessageFromFileOpenNStream(A_filename, A_msgID,callbackInfo );
+	callbackInfo.fp = fopen(A_filename, BINARY_READ);
+	//retStatus = setvbuf(callbackInfo.fp, (char*)NULL, _IOFBF, 32768);
+
+
+
+	sampBool = ReadMessageFromFileOpenNStream(A_filename, A_msgID);
+
+
+
+	/*if (!callbackInfo.fp)
+	{
+	printf("ERROR: Unable to open %s.\n", A_filename);
+	MC_Free_Message(A_msgID);
+	fflush(stdout);
+	return SAMP_FALSE;
+	}
+
+
+
+	retStatus = setvbuf(callbackInfo.fp, (char*)NULL, _IOFBF, 32768);
+	if (retStatus != 0)
+	{
+	printf("WARNING: Unable to set IO buffering on input file.\n");
+	}*/
+
+
+
+	//sampBool = ReadMessageFromFileBufferAllocate(A_filename);
+
+
+
+	if (callbackInfo.bufferLength == 0)
+	{
+		int length = 0;
+
+
+
+		mcStatus = MC_Get_Int_Config_Value(WORK_BUFFER_SIZE, &length);
+		if (mcStatus != MC_NORMAL_COMPLETION)
+		{
+			length = WORK_SIZE;
+		}
+		callbackInfo.bufferLength = length;
+	}
+
+
+
+
+	callbackInfo.buffer = malloc(callbackInfo.bufferLength);
+
+
+
+	sampBool = ReadMessageFromFileBufferAllocate(callbackInfo);
+	/*if (callbackInfo.buffer == NULL)
+	{
+	printf("ERROR: failed to allocate file read buffer [%d] kb", (int)callbackInfo.bufferLength);
+	fflush(stdout);
+	return SAMP_FALSE;
+	}*/
+
+
+
+	mcStatus = MC_Stream_To_Message(*A_msgID, 0x00080000, 0xFFFFFFFF, *A_syntax, &errorTag, (void*)&callbackInfo, StreamToMsgObj);
+
+
+
+	ReadMessageFromFileClose(callbackInfo);
+
+
+
+	/*if (callbackInfo.fp)
+	fclose(callbackInfo.fp);
+
+
+
+	if (callbackInfo.buffer)
+	free(callbackInfo.buffer);*/
+
+
+
+	sampBool = ReadMessageFromFileStreamError(mcStatus, A_msgID);
+
+
+
+	/*if (mcStatus != MC_NORMAL_COMPLETION)
+	{
+	PrintError("MC_Stream_To_Message error, possible wrong transfer syntax guessed", mcStatus);
+	MC_Free_Message(A_msgID);
+	fflush(stdout);
+	return SAMP_FALSE;
+	}*/
+
+
+
+	* A_bytesRead = callbackInfo.bytesRead;
+	fflush(stdout);
+
+
+
+	return SAMP_TRUE;
+
+
+
+} /* ReadMessageFromFile() */
+
+static SAMP_BOOLEAN ReadMessageFromFileEmptyMessage(int* A_msgID)
+{
+	MC_STATUS mcStatus;
+	//SAMP_BOOLEAN sampBool;
+
+
+
+	mcStatus = MC_Open_Empty_Message(A_msgID);
+	if (mcStatus != MC_NORMAL_COMPLETION)
+	{
+		PrintError("Unable to open empty message", mcStatus);
+		fflush(stdout);
+		return SAMP_FALSE;
+	}
+
+
+
+	return SAMP_TRUE;
+}
+
+
+
+static SAMP_BOOLEAN ReadMessageFromFileOpenNStream(char* A_filename, int* A_msgID)
+{
+	CBinfo callbackInfo = { 0 };
+	int retStatus = 0;
+	//SAMP_BOOLEAN sampBool;
+
+
+
+	callbackInfo.fp = fopen(A_filename, BINARY_READ);
+	if (!callbackInfo.fp)
+	{
+		printf("ERROR: Unable to open %s.\n", A_filename);
+		MC_Free_Message(A_msgID);
+		fflush(stdout);
+		return SAMP_FALSE;
+	}
+
+
+
+	retStatus = setvbuf(callbackInfo.fp, (char*)NULL, _IOFBF, 32768);
+	if (retStatus != 0)
+	{
+		printf("WARNING: Unable to set IO buffering on input file.\n");
+	}
+
+
+
+	return SAMP_TRUE;
+}
+
+
+
+static SAMP_BOOLEAN ReadMessageFromFileBufferAllocate(CBinfo callbackInfo)
+{
+
+	callbackInfo.buffer = malloc(callbackInfo.bufferLength);
+	if (callbackInfo.buffer == NULL)
+	{
+		printf("ERROR: failed to allocate file read buffer [%d] kb", (int)callbackInfo.bufferLength);
+		fflush(stdout);
+		return SAMP_FALSE;
+	}
+
+
+
+	return SAMP_TRUE;
+}
+
+
+
+static SAMP_BOOLEAN ReadMessageFromFileStreamError(MC_STATUS mcStatus, int* A_msgID)
+{
+	if (mcStatus != MC_NORMAL_COMPLETION)
+	{
+		PrintError("MC_Stream_To_Message error, possible wrong transfer syntax guessed", mcStatus);
+		MC_Free_Message(A_msgID);
+		fflush(stdout);
+		return SAMP_FALSE;
+	}
+
+
+
+	return SAMP_TRUE;
+}
+
+
+
+static void ReadMessageFromFileClose(CBinfo callbackInfo)
+{
+	if (callbackInfo.fp)
+		fclose(callbackInfo.fp);
+
+
+
+	if (callbackInfo.buffer)
+		free(callbackInfo.buffer);
+}
+
+/*************************************************************************
+ *
+ *  Function    :  StreamToMsgObj
+ *
+ *  Parameters  :  A_msgID         - Message ID of message being read
+ *                 A_CBinformation - user information passwd to callback
+ *                 A_isFirst       - flag to tell if this is the first call
+ *                 A_dataSize      - length of data read
+ *                 A_dataBuffer    - buffer where read data is stored
+ *                 A_isLast        - flag to tell if this is the last call
+ *
+ *  Returns     :  MC_NORMAL_COMPLETION on success
+ *                 any other return value on failure.
+ *
+ *  Description :  Reads input stream data from a file, and places the data
+ *                 into buffer to be used by the MC_Stream_To_Message function.
+ *
+ **************************************************************************/
+void CallBackInfoFP(int* A_isLast, CBinfo* callbackInfo)
+{
+	if (feof(callbackInfo->fp))
+	{
+		*A_isLast = 1;
+		fclose(callbackInfo->fp);
+		callbackInfo->fp = NULL;
+	}
+	else
+		*A_isLast = 0;
+}
+static MC_STATUS NOEXP_FUNC StreamToMsgObj(int        A_msgID,
+	void* A_CBinformation,
+	int        A_isFirst,
+	int* A_dataSize,
+	void** A_dataBuffer,
+	int* A_isLast)
+{
+	size_t          bytesRead;
+	CBinfo* callbackInfo = (CBinfo*)A_CBinformation;
+
+	if (A_isFirst)
+		callbackInfo->bytesRead = 0L;
+
+	bytesRead = fread(callbackInfo->buffer, 1, callbackInfo->bufferLength, callbackInfo->fp);
+	if (ferror(callbackInfo->fp))
+	{
+		perror("\tRead error when streaming message from file.\n");
+		return MC_CANNOT_COMPLY;
+	}
+
+	/*if (feof(callbackInfo->fp))
+	{
+		*A_isLast = 1;
+		fclose(callbackInfo->fp);
+		callbackInfo->fp = NULL;
+	}
+	else
+		*A_isLast = 0;*/
+	CallBackInfoFP(A_isLast, callbackInfo);
+
+	*A_dataBuffer = callbackInfo->buffer;
+	*A_dataSize = (int)bytesRead;
+	callbackInfo->bytesRead += bytesRead;
+
+	return MC_NORMAL_COMPLETION;
+} /* StreamToMsgObj() */
+
+
+
+
+/****************************************************************************
+ *
+ *  Function    :   PrintError
+ *
+ *  Description :   Display a text string on one line and the error message
+ *                  for a given error on the next line.
+ *
+ ****************************************************************************/
+static void PrintError(char* A_string, MC_STATUS A_status)
+{
+	char        prefix[30] = { 0 };
+	/*
+	 *  Need process ID number for messages
+	 */
+#ifdef UNIX
+	sprintf(prefix, "PID %d", getpid());
+#endif
+	if (A_status == -1)
+	{
+		printf("%s\t%s\n", prefix, A_string);
+	}
+	else
+	{
+		printf("%s\t%s:\n", prefix, A_string);
+		printf("%s\t\t%s\n", prefix, MC_Error_Message(A_status));
+	}
+}
