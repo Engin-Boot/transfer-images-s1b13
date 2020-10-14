@@ -1,4 +1,4 @@
-name: limit complexity
+name: Limit complexity
 
 on:
   push:
@@ -8,14 +8,13 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
-    
+
     - name: Install lizard
       run: pip install lizard
 
     - name: Limit complexity
-      run: lizard --CCN 3 
+      run: $HOME/.local/bin/lizard --CCN 3 
