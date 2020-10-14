@@ -1,0 +1,21 @@
+name: limit complexity
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Install lizard
+      run: pip install lizard
+
+    - name: Limit complexity
+      run: lizard --CCN 3 
