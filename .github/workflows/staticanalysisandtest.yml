@@ -19,16 +19,6 @@ jobs:
     steps:
 
      - uses: actions/checkout@v2
-
-
-     - name: install cppcheck static analysis
-
-       run: sudo apt-get update && sudo apt-get install -y cppcheck
-
-
-     - name: static analysis
-
-       run: cppcheck --enable=all --error-exitcode=1  SCU/stor_scu.c
        
      - name: stor_scu_test build
        run: g++ -Wall -Wextra -o scu-test scutest/*.cpp
