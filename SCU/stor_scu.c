@@ -274,7 +274,7 @@ void traverseListandsend(STORAGE_OPTIONS* options, InstanceNode** node, char* fn
 {
 	void* imageStartTime = NULL;
 	int imagesSent = 0;
-	double seconds = 0.0;
+	float seconds = 0.0;
 	SAMP_BOOLEAN sampBool;
 	MC_STATUS        mcStatus;
 	while (*node)
@@ -314,7 +314,7 @@ void traverseListandsend(STORAGE_OPTIONS* options, InstanceNode** node, char* fn
 			PrintError("MC_Free_Message failed for request message", mcStatus);
 		}
 
-		seconds = GetIntervalElapsed(imageStartTime);
+		seconds = (float)GetIntervalElapsed(imageStartTime);
 		printf("\tSent %s image (%d of %d), elapsed time: %.3f seconds\n", (*node)->serviceName, imagesSent, totalImages, seconds);
 
 		/*
@@ -924,7 +924,7 @@ static void ChangePatientID(InstanceNode* A_node)
 
 static SAMP_BOOLEAN ReadImage(STORAGE_OPTIONS* A_options, int A_appID, InstanceNode* A_node)
 {
-	FORMAT_ENUM             format = UNKNOWN_FORMAT;
+	FORMAT_ENUM             format; //= UNKNOWN_FORMAT;
 	SAMP_BOOLEAN            sampBool = SAMP_FALSE;
 
 
@@ -1004,7 +1004,7 @@ static SAMP_BOOLEAN SendImage(STORAGE_OPTIONS* A_options, int A_associationID, I
 
 
 
-	sampBool = SendImageSetSOPInstanceUID(mcStatus);
+	//sampBool = SendImageSetSOPInstanceUID(mcStatus);
 
 	sampBool = SendImageRequestMessage(A_options, A_associationID, A_node);
 
@@ -1115,7 +1115,7 @@ SAMP_BOOLEAN ReadMessageFromFile(STORAGE_OPTIONS* A_options,
 	CBinfo          callbackInfo = { 0 };
 	//CBinfo* callbackInfo = new CBinfo;
 	//*callbackInfo = { 0 };
-	int             retStatus = 0;
+	//int             retStatus = 0;
 	returnFlag = SAMP_FALSE;
 
 	/*
@@ -1139,7 +1139,7 @@ SAMP_BOOLEAN ReadMessageFromFile(STORAGE_OPTIONS* A_options,
 	if (!returnFlag)
 	{
 		mcStatus = MC_Stream_To_Message(*A_msgID, 0x00080000, 0xFFFFFFFF, *A_syntax, &errorTag, (void*)&callbackInfo, StreamToMsgObj);
-
+		
 		closeFile(&callbackInfo);
 		freeBuffer(&callbackInfo);
 
