@@ -55,7 +55,7 @@ my_event_handler.on_created = on_created
 my_event_handler.on_deleted = on_deleted
 my_event_handler.on_modified = on_modified
 
-path = "C:/Users/320091120/Downloads/DICOM/DICOM/mc3apps"
+path = "."
 go_recursively = True
 my_observer = Observer()
 my_observer.schedule(my_event_handler, path, recursive=go_recursively)
