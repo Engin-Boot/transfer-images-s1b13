@@ -314,7 +314,7 @@ void traverseListandsend(STORAGE_OPTIONS* options, InstanceNode** node, char* fn
 			PrintError("MC_Free_Message failed for request message", mcStatus);
 		}
 
-		seconds = (float)GetIntervalElapsed(imageStartTime);
+		seconds = GetIntervalElapsed(imageStartTime);
 		printf("\tSent %s image (%d of %d), elapsed time: %.3f seconds\n", (*node)->serviceName, imagesSent, totalImages, seconds);
 
 		/*
@@ -1004,7 +1004,7 @@ static SAMP_BOOLEAN SendImage(STORAGE_OPTIONS* A_options, int A_associationID, I
 
 
 
-	//sampBool = SendImageSetSOPInstanceUID(mcStatus);
+	sampBool = SendImageSetSOPInstanceUID(mcStatus);
 
 	sampBool = SendImageRequestMessage(A_options, A_associationID, A_node);
 
