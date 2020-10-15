@@ -1101,283 +1101,171 @@ static SAMP_BOOLEAN SendImageRequestMessage(STORAGE_OPTIONS* A_options, int A_as
  *                  message ID.
  *
  ****************************************************************************/
-static SAMP_BOOLEAN ReadMessageFromFile(STORAGE_OPTIONS* A_options,
-	char* A_filename,
-	FORMAT_ENUM A_format,
-	int* A_msgID,
-	TRANSFER_SYNTAX* A_syntax,
-	size_t* A_bytesRead)
+static SAMP_BOOLEAN returnFlag;
+static SAMP_BOOLEAN returnValue;
+SAMP_BOOLEAN ReadMessageFromFile(STORAGE_OPTIONS* A_options,
+								char* A_filename,
+								FORMAT_ENUM       A_format,
+								int* A_msgID,
+								TRANSFER_SYNTAX* A_syntax,
+								size_t* A_bytesRead)
 {
-
-
-
-	MC_STATUS mcStatus;
-	unsigned long errorTag = 0;
-	CBinfo callbackInfo = { 0 };
-
-	SAMP_BOOLEAN sampBool;
-
-
+	MC_STATUS       mcStatus;
+	unsigned long   errorTag = 0;
+	CBinfo          callbackInfo = { 0 };
+	//CBinfo* callbackInfo = new CBinfo;
+	//*callbackInfo = { 0 };
+	int             retStatus = 0;
+	returnFlag = SAMP_FALSE;
 
 	/*
-	* Determine the format
-	*/
-	/*switch (A_format)
-	{
-	case IMPLICIT_LITTLE_ENDIAN_FORMAT:
+	 * Set the format
+	 */
 	*A_syntax = IMPLICIT_LITTLE_ENDIAN;
-	break;
-	case IMPLICIT_BIG_ENDIAN_FORMAT:
-	*A_syntax = IMPLICIT_BIG_ENDIAN;
-	break;
-	case EXPLICIT_LITTLE_ENDIAN_FORMAT:
-	*A_syntax = EXPLICIT_LITTLE_ENDIAN;
-	break;
-	case EXPLICIT_BIG_ENDIAN_FORMAT:
-	*A_syntax = EXPLICIT_BIG_ENDIAN;
-	break;
-	default:
-	return SAMP_FALSE;
-	}*/
-
-
-
-	* A_syntax = IMPLICIT_LITTLE_ENDIAN;
-
-
-
-	//if (A_options->Verbose)
-	// printf("Reading DICOM \"stream\" format file in %s: %s\n", GetSyntaxDescription(*A_syntax), A_filename);
-
-
 
 	/*
-	* Open an empty message object to load the image into
-	*/
+	 * Open an empty message object to load the image into
+	 */
+	openEmptyMessage(A_msgID);
 
-	sampBool = ReadMessageFromFileEmptyMessage(A_msgID);
-	/*mcStatus = MC_Open_Empty_Message(A_msgID);
+	openMsgFile(&callbackInfo, A_filename, A_msgID);
+
+	setBufferIO(&callbackInfo);
+
+	setBufferLen(&callbackInfo);
+	memoryallocationbuffer(&callbackInfo);
+
+
+	if (!returnFlag)
+	{
+		mcStatus = MC_Stream_To_Message(*A_msgID, 0x00080000, 0xFFFFFFFF, *A_syntax, &errorTag, (void*)&callbackInfo, StreamToMsgObj);
+
+		closeFile(&callbackInfo);
+		freeBuffer(&callbackInfo);
+
+
+		*A_bytesRead = callbackInfo.bytesRead;
+		fflush(stdout);
+		returnValue = SAMP_TRUE;
+		
+	}
+	return returnValue;
+
+}
+
+SAMP_BOOLEAN isFirstFile(int isFirstFlag, CBinfo* A_cbinfo)
+{
+	if (isFirstFlag)
+	{
+		A_cbinfo->bytesRead = 0L;
+		return SAMP_TRUE;
+	}
+	else
+		return SAMP_FALSE;
+}
+void memoryallocationbuffer(CBinfo* A_cbinfo)
+{
+    if (!returnFlag)
+    {
+       
+        A_cbinfo->buffer = malloc(A_cbinfo->bufferLength);
+        if (A_cbinfo->buffer == NULL)
+        {
+            printf("ERROR: failed to allocate file read buffer [%d] kb", (int)A_cbinfo->bufferLength);
+            fflush(stdout);
+            returnFlag = SAMP_TRUE;
+            returnValue = SAMP_FALSE;
+        }
+    }
+}
+
+SAMP_BOOLEAN isLastFile(int eof, int* isLast)
+{
+	if (eof)
+	{
+		*isLast = 1;
+		return SAMP_TRUE;
+	}
+	else
+	{
+		*isLast = 0;
+		return SAMP_FALSE;
+	}
+}
+
+
+void openEmptyMessage(int* A_msgID)
+{
+	MC_STATUS mcStatus;
+	mcStatus = MC_Open_Empty_Message(A_msgID);
 	if (mcStatus != MC_NORMAL_COMPLETION)
 	{
-	PrintError("Unable to open empty message", mcStatus);
-	fflush(stdout);
-	return SAMP_FALSE;
-	}*/
-
-
-
-	/*
-	* Open and stream message from file
-	*/
-
-
-
-	//sampBool = ReadMessageFromFileOpenNStream(A_filename, A_msgID,callbackInfo );
-	callbackInfo.fp = fopen(A_filename, BINARY_READ);
-	//retStatus = setvbuf(callbackInfo.fp, (char*)NULL, _IOFBF, 32768);
-
-
-
-	sampBool = ReadMessageFromFileOpenNStream(A_filename, A_msgID);
-
-
-
-	/*if (!callbackInfo.fp)
-	{
-	printf("ERROR: Unable to open %s.\n", A_filename);
-	MC_Free_Message(A_msgID);
-	fflush(stdout);
-	return SAMP_FALSE;
+		PrintError("Unable to open empty message", mcStatus);
+		fflush(stdout);
+		returnFlag = SAMP_TRUE;
+		returnValue = SAMP_FALSE;
 	}
+}
 
-
-
-	retStatus = setvbuf(callbackInfo.fp, (char*)NULL, _IOFBF, 32768);
-	if (retStatus != 0)
+void openMsgFile(CBinfo* A_cbinfo, char* A_filename, int* A_msgID)
+{
+	if (!returnFlag)
 	{
-	printf("WARNING: Unable to set IO buffering on input file.\n");
-	}*/
+		A_cbinfo->fp = fopen(A_filename, BINARY_READ);
+		if (!A_cbinfo->fp)
+		{
+			printf("ERROR: Unable to open %s.\n", A_filename);
+			MC_Free_Message(A_msgID);
+			fflush(stdout);
+			returnFlag = SAMP_TRUE;
+			returnValue = SAMP_FALSE;
+		}
+	}
+}
+void PrintStatus(char* A_string, int statusFlag)
+{
+	if (statusFlag)
+	{
+		printf(A_string);
+	}
+}
+void setBufferIO(CBinfo* A_cinfo)
+{
+	if (!returnFlag)
+	{
+		int retStatus = setvbuf(A_cinfo->fp, (char*)NULL, _IOFBF, 32768);
+		PrintStatus("WARNING: Unable to set ID buffering on input file.", retStatus != 0);
+	}
+}
 
-
-
-	//sampBool = ReadMessageFromFileBufferAllocate(A_filename);
-
-
-
-	if (callbackInfo.bufferLength == 0)
+void setBufferLen(CBinfo* A_cbinfo)
+{
+	MC_STATUS mcStatus;
+	if (A_cbinfo->bufferLength == 0)
 	{
 		int length = 0;
-
-
 
 		mcStatus = MC_Get_Int_Config_Value(WORK_BUFFER_SIZE, &length);
 		if (mcStatus != MC_NORMAL_COMPLETION)
 		{
 			length = WORK_SIZE;
 		}
-		callbackInfo.bufferLength = length;
+		A_cbinfo->bufferLength = length;
 	}
-
-
-
-
-	callbackInfo.buffer = malloc(callbackInfo.bufferLength);
-
-
-
-	sampBool = ReadMessageFromFileBufferAllocate(callbackInfo);
-	/*if (callbackInfo.buffer == NULL)
-	{
-	printf("ERROR: failed to allocate file read buffer [%d] kb", (int)callbackInfo.bufferLength);
-	fflush(stdout);
-	return SAMP_FALSE;
-	}*/
-
-
-
-	mcStatus = MC_Stream_To_Message(*A_msgID, 0x00080000, 0xFFFFFFFF, *A_syntax, &errorTag, (void*)&callbackInfo, StreamToMsgObj);
-
-
-
-	ReadMessageFromFileClose(callbackInfo);
-
-
-
-	/*if (callbackInfo.fp)
-	fclose(callbackInfo.fp);
-
-
-
-	if (callbackInfo.buffer)
-	free(callbackInfo.buffer);*/
-
-
-
-	sampBool = ReadMessageFromFileStreamError(mcStatus, A_msgID);
-
-
-
-	/*if (mcStatus != MC_NORMAL_COMPLETION)
-	{
-	PrintError("MC_Stream_To_Message error, possible wrong transfer syntax guessed", mcStatus);
-	MC_Free_Message(A_msgID);
-	fflush(stdout);
-	return SAMP_FALSE;
-	}*/
-
-
-
-	* A_bytesRead = callbackInfo.bytesRead;
-	fflush(stdout);
-
-
-
-	return SAMP_TRUE;
-
-
-
-} /* ReadMessageFromFile() */
-
-static SAMP_BOOLEAN ReadMessageFromFileEmptyMessage(int* A_msgID)
-{
-	MC_STATUS mcStatus;
-	//SAMP_BOOLEAN sampBool;
-
-
-
-	mcStatus = MC_Open_Empty_Message(A_msgID);
-	if (mcStatus != MC_NORMAL_COMPLETION)
-	{
-		PrintError("Unable to open empty message", mcStatus);
-		fflush(stdout);
-		return SAMP_FALSE;
-	}
-
-
-
-	return SAMP_TRUE;
 }
 
 
-
-static SAMP_BOOLEAN ReadMessageFromFileOpenNStream(char* A_filename, int* A_msgID)
+void closeFile(CBinfo* A_cbinfo)
 {
-	CBinfo callbackInfo = { 0 };
-	int retStatus = 0;
-	//SAMP_BOOLEAN sampBool;
-
-
-
-	callbackInfo.fp = fopen(A_filename, BINARY_READ);
-	if (!callbackInfo.fp)
-	{
-		printf("ERROR: Unable to open %s.\n", A_filename);
-		MC_Free_Message(A_msgID);
-		fflush(stdout);
-		return SAMP_FALSE;
-	}
-
-
-
-	retStatus = setvbuf(callbackInfo.fp, (char*)NULL, _IOFBF, 32768);
-	if (retStatus != 0)
-	{
-		printf("WARNING: Unable to set IO buffering on input file.\n");
-	}
-
-
-
-	return SAMP_TRUE;
+	if (A_cbinfo->fp)
+		fclose(A_cbinfo->fp);
 }
 
-
-
-static SAMP_BOOLEAN ReadMessageFromFileBufferAllocate(CBinfo callbackInfo)
+void freeBuffer(CBinfo* A_cbinfo)
 {
-
-	callbackInfo.buffer = malloc(callbackInfo.bufferLength);
-	if (callbackInfo.buffer == NULL)
-	{
-		printf("ERROR: failed to allocate file read buffer [%d] kb", (int)callbackInfo.bufferLength);
-		fflush(stdout);
-		return SAMP_FALSE;
-	}
-
-
-
-	return SAMP_TRUE;
+	if (A_cbinfo->buffer)
+		free(A_cbinfo->buffer);
 }
-
-
-
-static SAMP_BOOLEAN ReadMessageFromFileStreamError(MC_STATUS mcStatus, int* A_msgID)
-{
-	if (mcStatus != MC_NORMAL_COMPLETION)
-	{
-		PrintError("MC_Stream_To_Message error, possible wrong transfer syntax guessed", mcStatus);
-		MC_Free_Message(A_msgID);
-		fflush(stdout);
-		return SAMP_FALSE;
-	}
-
-
-
-	return SAMP_TRUE;
-}
-
-
-
-static void ReadMessageFromFileClose(CBinfo callbackInfo)
-{
-	if (callbackInfo.fp)
-		fclose(callbackInfo.fp);
-
-
-
-	if (callbackInfo.buffer)
-		free(callbackInfo.buffer);
-}
-
 /*************************************************************************
  *
  *  Function    :  StreamToMsgObj
