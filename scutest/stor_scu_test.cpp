@@ -96,3 +96,82 @@ TEST_CASE("When we don't pass -P or -p to this function the PortNumber of the Re
     scu::CopyPortName(&i,CMDargument,&s);
     REQUIRE(s.RemotePort == 0);
 }
+TEST_CASE("travese node if start and stop numbers are correct"){
+ STORAGE_OPTIONS A_options;
+ char fname[512] = { 0 };
+ A_options.StartImage=0;
+ A_options.StopImage=0;
+ 	InstanceNode* instanceList = NULL;
+
+   REQUIRE(scu::traverseimages(&A_options, &instanceList, fname)==SAMP_TRUE);
+}
+TEST_CASE("donot travese node if start and stop numbers are incorrect"){
+ STORAGE_OPTIONS A_options;
+ char fname[512] = { 0 };
+ A_options.StartImage=10;
+ A_options.StopImage=0;
+ 	InstanceNode* instanceList = NULL;
+
+   REQUIRE(scu::traverseimages(&A_options, &instanceList, fname) == SAMP_FALSE);
+}
+TEST_CASE("when no of nodes is empty the function getnumnodes returns 0")
+{STORAGE_OPTIONS A_options;
+ char fname[512] = { 0 };
+ A_options.StartImage=10;
+ A_options.StopImage=0;
+ 	InstanceNode* instanceList = NULL;
+scu::traverseimages(&A_options, &instanceList, fname);
+
+    REQUIRE(scu::GetNumNodes(instanceList)==0);
+
+}
+TEST_CASE("when no of nodes is non  empty the function getnumnodes returns no of nodes present")
+{STORAGE_OPTIONS A_options;
+ char fname[512] = { 0 };
+ A_options.StartImage=0;
+ A_options.StopImage=0;
+ 	InstanceNode* instanceList = NULL;
+scu::traverseimages(&A_options, &instanceList, fname);
+
+    REQUIRE(scu::GetNumNodes(instanceList)==1);
+
+}
+TEST_CASE("add new file node to empty nodelist")
+{ 
+    InstanceNode*    newNode;
+InstanceNode* instanceList = NULL;
+	newNode = (InstanceNode*)malloc(sizeof(InstanceNode));
+	memset(newNode, 0, sizeof(InstanceNode));
+	strncpy(newNode->fname, "0.img", sizeof(newNode->fname));
+	newNode->fname[sizeof(newNode->fname) - 1] = '\0';
+
+	newNode->responseReceived = SAMP_FALSE;
+	newNode->failedResponse = SAMP_FALSE;
+	newNode->imageSent = SAMP_FALSE;
+	newNode->msgID = -1;
+	newNode->transferSyntax = IMPLICIT_LITTLE_ENDIAN;
+    scu::update_list(&instanceList,newNode);
+    REQUIRE(scu::GetNumNodes(instanceList)==1);
+
+}
+TEST_CASE("add new file node to existing nodelist")
+{ 
+    InstanceNode*    newNode1,*newNode2;
+InstanceNode* instanceList = NULL;
+	newNode1= (InstanceNode*)malloc(sizeof(InstanceNode));
+	memset(newNode1, 0, sizeof(InstanceNode));
+	strncpy(newNode1->fname, "0.img", sizeof(newNode1->fname));
+	newNode1->fname[sizeof(newNode1->fname) - 1] = '\0';
+	newNode2 = (InstanceNode*)malloc(sizeof(InstanceNode));
+	memset(newNode2, 0, sizeof(InstanceNode));
+	strncpy(newNode2->fname, "1.img", sizeof(newNode2->fname));
+	newNode2->fname[sizeof(newNode2->fname) - 1] = '\0';
+
+	
+    scu::update_list(&instanceList,newNode1);
+     scu::update_list(&instanceList,newNode2);
+
+    REQUIRE(scu::GetNumNodes(instanceList)==2);
+
+}
+
