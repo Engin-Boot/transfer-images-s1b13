@@ -174,4 +174,9 @@ InstanceNode* instanceList = NULL;
     REQUIRE(scu::GetNumNodes(instanceList)==2);
 
 }
+TEST_CASE("when we pass storage options to the function, then it has to check whether RemoteHostName and RemotePort is set"){
+    STORAGE_OPTIONS A_options;
+REQUIRE(scu::CheckHostDetails(&A_options) == 0);
+}
+
 
