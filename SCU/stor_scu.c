@@ -274,7 +274,7 @@ void traverseListandsend(STORAGE_OPTIONS* options, InstanceNode** node, char* fn
 {
 	void* imageStartTime = NULL;
 	int imagesSent = 0;
-	float seconds = 0.0;
+	double seconds = 0.0;
 	SAMP_BOOLEAN sampBool;
 	MC_STATUS        mcStatus;
 	while (*node)
