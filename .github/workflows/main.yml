@@ -1,0 +1,29 @@
+name: Build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+    
+jobs:
+  build:
+  
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+      
+    - name: Setup msbuild.exe
+      uses: microsoft/setup-msbuild@v1.0.0
+    
+    - name: Build SCU
+      run: msbuild SCUFiles/SCU.vcxproj /p:configuration=debug /p:platform=x64
+    
+    - name: static analysis of SCU
+      run: ./Cppcheck_Config/cppcheck.exe SCU/storscu.cpp --verbose --std=c++11 --language=c++ --enable=all
+    
+    - name: Cleaning SCU build folders
+      run: msbuild SCU/stor_scu.vcxproj /t:clean /p:configuration=debug /p:platform=x64
+
+   
