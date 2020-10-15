@@ -201,7 +201,16 @@ int main(int argc, char** argv);
 	void checkopenassociation(STORAGE_OPTIONS* A_options, MC_STATUS mcStatus);
 	static SAMP_BOOLEAN SendImageSetSOPInstanceUID(MC_STATUS mcStatus);
 	static SAMP_BOOLEAN SendImageRequestMessage(STORAGE_OPTIONS* A_options, int A_associationID, InstanceNode* A_node);
-
+	void freeBuffer(CBinfo* A_cbinfo);
+	SAMP_BOOLEAN isFirstFile(int isFirstFlag, CBinfo* A_cbinfo);
+	SAMP_BOOLEAN isLastFile(int eof, int* isLast);
+	void openEmptyMessage(int* A_msgID);
+	void openMsgFile(CBinfo* A_cbinfo, char* A_filename, int* A_msgID);
+	void setBufferIO(CBinfo* A_cinfo);
+	void setBufferLen(CBinfo* A_cbinfo);
+	void memoryallocationbuffer(CBinfo* A_cbinfo);
+	void closeFile(CBinfo* A_cbinfo);
+	void PrintStatus(char* A_string, int statusFlag);
 
 
 	static char* Create_Inst_UID(void);
