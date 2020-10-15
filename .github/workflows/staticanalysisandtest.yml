@@ -32,4 +32,4 @@ jobs:
 
      - name: static analysis
 
-       run: cppcheck --enable=all --error-exitcode=1 SCU/stor_scu.c
+       run: cppcheck SCU/stor_scu.c
