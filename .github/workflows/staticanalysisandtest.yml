@@ -30,8 +30,8 @@ jobs:
 
        run: cppcheck --enable=all --error-exitcode=1  SCU/stor_scu.c
        
-     -name: stor_scu_test build
-      run: g++ -Wall -Wextra -o scu-test scutest/*.cpp
+     - name: stor_scu_test build
+       run: g++ -Wall -Wextra -o scu-test scutest/*.cpp
       
-     -name: Run scu-test
-      run: ./scu-test
+     - name: Run scu-test
+       run: ./scu-test
