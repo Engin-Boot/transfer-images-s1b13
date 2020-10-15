@@ -17,7 +17,7 @@
 #include "../mc3inc/diction.h"
 #include "../mc3inc/mc3services.h"
 #include "../mc3inc/mc3items.h"
-#include "../SCU/general_util.h"
+
 #include <string.h>
 
  /*
