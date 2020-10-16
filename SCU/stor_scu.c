@@ -407,25 +407,16 @@ void checkresponse(STORAGE_OPTIONS* options) {
  ********************************************************************/
 static void PrintCmdLine(void)
 {
-	printf("\nUsage stor_scu remote_ae start stop -f filename -a local_ae -b local_port -c -n remote_host -p remote_port -l service_list -v -u username -w password -q\n");
+	printf("\nUsage stor_scu remote_ae start stop -c -n remote_host -p remote_port -fname first_name -lname last_name -id sopInstanceUID\n");
 	printf("\n");
 	printf("\t remote_ae       name of remote Application Entity Title to connect with\n");
 	printf("\t start           start image number (not required if -f specified)\n");
 	printf("\t stop            stop image number (not required if -f specified)\n");
-	printf("\t -f filename     (optional) specify a file containing a list of images to transfer\n");
-	printf("\t -a local_ae     (optional) specify the local Application Title (default: MERGE_STORE_SCU)\n");
-	printf("\t -b local_port   (optional) specify the local TCP listen port for commitment (default: found in the mergecom.pro file)\n");
-	printf("\t -c              Do storage commitment for the transferred files\n");
 	printf("\t -n remote_host  (optional) specify the remote hostname (default: found in the mergecom.app file for remote_ae)\n");
 	printf("\t -p remote_port  (optional) specify the remote TCP listen port (default: found in the mergecom.app file for remote_ae)\n");
-	printf("\t -l service_list (optional) specify the service list to use when negotiating (default: Storage_SCU_Service_List)\n");
-	printf("\t -s              Transfer the data using stream (raw) mode\n");
-	printf("\t -v              Execute in verbose mode, print negotiation information\n");
-	printf("\t -u username     (optional) specify a username to negotiate as defined in DICOM Supplement 99\n");
-	printf("\t                 Note: just a username can be specified, or a username and password can be specified\n");
-	printf("\t                       A password alone cannot be specified.\n");
-	printf("\t -w password     (optional) specify a password to negotiate as defined in DICOM Supplement 99\n");
-	printf("\t -q              Positive response to user identity requested from SCP\n");
+	printf("\t -fname first_name Enter first name of the patient\n");
+	printf("\t -lname last_name Enter last name of the patient\n");
+	printf("\t -id sopInstanceUID Enter SOPInstanceUID\n");
 	printf("\n");
 	printf("\tImage files must be in the current directory if -f is not used.\n");
 	printf("\tImage files must be named 0.img, 1.img, 2.img, etc if -f is not used.\n");
