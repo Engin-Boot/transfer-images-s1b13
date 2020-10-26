@@ -5,9 +5,13 @@ import smtplib, ssl
 
 port = 465  # For SSL
 smtp_server = "smtp.gmail.com"
-sender_email = "youraddress@gmail.com"  # Enter your address
-receiver_email = "receiveraddress@gmail.com"  # Enter receiver address
+#sender_email = "youraddress@gmail.com"  # Enter your address
+#receiver_email = "receiveraddress@gmail.com"  # Enter receiver address
+#password = ""
+sender_email = "karrsp01@gmail.com"  # Enter your address
+receiver_email = "salonimadhan97@gmail.com"  # Enter receiver address
 password = ""
+
 
 
 context = ssl.create_default_context()
@@ -17,6 +21,8 @@ if __name__ == "__main__":
     ignore_patterns = ""
     ignore_directories = False
     case_sensitive = True
+    print("inside main")
+
     my_event_handler = PatternMatchingEventHandler(patterns, ignore_patterns, ignore_directories, case_sensitive)
 
 def on_created(event):
