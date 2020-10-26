@@ -8,19 +8,33 @@ on:
     
 jobs:
   build:
-  
-    runs-on: windows-latest
-    
+    runs-on: ubuntu-latest
+
     steps:
     - uses: actions/checkout@v2
+    - name: Set up Python 3.x
+      uses: actions/setup-python@v2
+      with:
+        # Semantic version range syntax or exact version of a Python version
+        python-version: '3.x' 
+        # Optional - x64 or x86 architecture, defaults to x64
+        architecture: 'x64' 
+    # You can test your matrix by printing the current Python version
+    - name: Display Python version
+      run: python -c "import sys; print(sys.version)"
       
-    - name: Setup msbuild.exe
-      uses: microsoft/setup-msbuild@v1.0.0
+    #runs-on: windows-latest
     
-    - name: Build SCU
-      run: msbuild SCU/stor_scu.vcxproj /p:configuration=debug /p:platform=x64
+    #steps:
+    #- uses: actions/checkout@v2
+      
+    #- name: Setup msbuild.exe
+    #  uses: microsoft/setup-msbuild@v1.0.0
     
-    - name: Cleaning SCU build folders
-      run: msbuild SCU/stor_scu.vcxproj /t:clean /p:configuration=debug /p:platform=x64
+    #- name: Build SCU
+     # run: msbuild SCU/stor_scu.vcxproj /p:configuration=debug /p:platform=x64
+    
+    #- name: Cleaning SCU build folders
+     # run: msbuild SCU/stor_scu.vcxproj /t:clean /p:configuration=debug /p:platform=x64
 
    
