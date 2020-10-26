@@ -19,7 +19,13 @@ jobs:
         python-version: '3.x' 
         # Optional - x64 or x86 architecture, defaults to x64
         architecture: 'x64' 
-    
+    - name: Install dependencies
+      run: |
+        pip install pandas as pd
+        pip install os
+        pip install sys
+        pip install csv
+        
     - name: Run Image Tracker
       run: python ImageTracker/ImageTracker.py ImageTracker/images
       
