@@ -24,8 +24,8 @@ jobs:
         python -m pip install --upgrade pip
         pip install pandas as pd
         
-    - name: Run Image Tracker
-      run: python ImageTracker/ImageTracker.py ImageTracker/images
+    - name: Run Image Tracker Test
+      run: python ImageTracker/ImageTrackerTest.py 
       
     #runs-on: windows-latest
     
