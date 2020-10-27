@@ -1,7 +1,6 @@
 import unittest
 import ImageTracker
 
-
 class TestImageTracker(unittest.TestCase):   
     def test_when_client_calls_with_valid_csv_then_print_CSV_data(self):
         testsamplefilename = 'temp-samples-test.csv'
@@ -26,7 +25,7 @@ class TestImageTracker(unittest.TestCase):
 2.img,Diagnosis Pending""")
         imageName="0.img"
         updated_status="Pending"   # Pending for Diagnosis Pending
-        self.assertTrue(ImageTracker.update_ImageStatus(testsamplefilename,imageName,updated_status)==True)
+        self.assertTrue(ImageTracker.update_ImageStatus(testsamplefilename,imageName,updated_status)=="Status updated successfully")
 
 
     def test_when_client_updates_Diagnosis_status_Pending_then_DiagnosisCompleted_is_set(self):
@@ -39,7 +38,7 @@ class TestImageTracker(unittest.TestCase):
 2.img,Diagnosis Pending""")
         imageName="1.img"
         updated_status="Completed"   # Complete for Diagnosis Complete
-        self.assertTrue(ImageTracker.update_ImageStatus(testsamplefilename,imageName,updated_status)==True)
+        self.assertTrue(ImageTracker.update_ImageStatus(testsamplefilename,imageName,updated_status)=="Status updated successfully")
 
 
     def test_when_new_file_is_updated_then_it_gets_added_to_csv_with_Pending_Status(self):
@@ -56,6 +55,5 @@ class TestImageTracker(unittest.TestCase):
         x=ImageTracker.showCSVData(testsamplefilename)
         self.assertEqual(x,"CSV data printed successfully")   
 
-        
 if __name__ == '__main__':    
     unittest.main()
