@@ -46,7 +46,7 @@ def update_ImageStatus(DiagnosisTrackerfilename,imageName,updated_status):    #u
     DiagnosisData.loc[DiagnosisData['ImageFileName'] == imageName, 'Status'] = updated_status
     DiagnosisData.to_csv(DiagnosisTrackerfilename)
     print("Status updated successfully")
-    return True
+    return "Status updated successfully"
     
 
 def startImageTracking():      #start image tracking 
@@ -58,9 +58,9 @@ def startImageTracking():      #start image tracking
             print("Enter image Name and status(Enter Complete for Diagnosis Complete/Pending for Diagnosis Pending)")
             imageName=input()
             updated_status=input()
-            if(update_ImageStatus(DiagnosisTrackerfilename,imageName,updated_status)):
-                print("Updated CSV data")
-                y=showCSVData(DiagnosisTrackerfilename)
+            z=update_ImageStatus(DiagnosisTrackerfilename,imageName,updated_status)
+            print("Updated CSV data")
+            y=showCSVData(DiagnosisTrackerfilename)
         else:
             print("Image Tracking stopped")
             exit()
