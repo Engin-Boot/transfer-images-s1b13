@@ -3,16 +3,7 @@ import sys
 import os
 import csv
 
-DiagnosisTrackerfilename="DiagnosisTracker.csv"
-
-def write_csv(DiagnosisTrackerfilename):                 #writes empty csv consisting only column names  
-    fields=['ImageFileName','Status']
-    with open(DiagnosisTrackerfilename, 'w') as csvfile: 
-        # creating a csv writer object  
-        csvwriter = csv.writer(csvfile)  
-        # writing the fields  
-        csvwriter.writerow(fields)  
-
+DiagnosisTrackerfilename="DiagnosisTracker.csv" 
 
 def addNewFileNameToCsv(DiagnosisTrackerfilename,new_file):    #add new row(new Image File) to CSV
     diagnosis_data=pd.read_csv(DiagnosisTrackerfilename)
@@ -68,8 +59,7 @@ def startImageTracking():      #start image tracking
 
 
 if __name__ == "__main__":
-    images_path=sys.argv[1]     #Path of all images folder
-    write_csv(DiagnosisTrackerfilename)                 #writes empty csv consisting only column names     
+    images_path=sys.argv[1]     #Path of all images folder      
     check_new_file_and_update_in_csv(images_path)  #check new image file and update in CSV 
     print("CSV File checked and updated")
     y=showCSVData(DiagnosisTrackerfilename)               # show existing CSV data
