@@ -1,0 +1,8 @@
+﻿  general_util.c
+  stor_scu.c
+stor_scu.c(317): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+  Generating code
+  All 64 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  stor_scu.vcxproj -> C:\BootcampStuff\transfer-images-s1b13\SCU\x64_Release\stor_scu.exe
+  stor_scu.vcxproj -> C:\BootcampStuff\transfer-images-s1b13\SCU\x64_Release\stor_scu.pdb (Full PDB)
