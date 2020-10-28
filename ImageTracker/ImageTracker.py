@@ -69,9 +69,16 @@ def startImageTracking():      #start image tracking
 
 if __name__ == "__main__":
     images_path=sys.argv[1]     #Path of all images folder
+<<<<<<< HEAD
     print(images_path)
+=======
+>>>>>>> fc74ffd6b8e0c0de0c88fa20d9644a7410686327
     write_csv(DiagnosisTrackerfilename)                 #writes empty csv consisting only column names     
     check_new_file_and_update_in_csv(images_path)  #check new image file and update in CSV 
     print("CSV File checked and updated")
     y=showCSVData(DiagnosisTrackerfilename)               # show existing CSV data
+<<<<<<< HEAD
     startImageTracking()        #start tracking images    
+=======
+    startImageTracking()        #start tracking images    
+>>>>>>> fc74ffd6b8e0c0de0c88fa20d9644a7410686327

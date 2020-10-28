@@ -56,4 +56,8 @@ class TestImageTracker(unittest.TestCase):
         self.assertEqual(x,"CSV data printed successfully")   
 
 if __name__ == '__main__':    
+<<<<<<< HEAD
     unittest.main()
+=======
+    unittest.main()
+>>>>>>> fc74ffd6b8e0c0de0c88fa20d9644a7410686327

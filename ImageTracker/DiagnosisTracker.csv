@@ -1,5 +1,14 @@
+<<<<<<< HEAD
 ImageFileName,Status
 0.img,Diagnosis Pending
 1.img,Diagnosis Pending
 2.img,Diagnosis Pending
 3.img,Diagnosis Pending
+=======
+,ImageFileName,Status
+0,0.img,Diagnosis Complete
+1,1.img,Diagnosis Pending
+2,2.img,Diagnosis Pending
+3,3.img,Diagnosis Pending
+
+>>>>>>> fc74ffd6b8e0c0de0c88fa20d9644a7410686327
