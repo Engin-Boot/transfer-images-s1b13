@@ -35,7 +35,7 @@ def update_ImageStatus(DiagnosisTrackerfilename,imageName,updated_status):    #u
     else:
         updated_status="Diagnosis Pending"
     DiagnosisData.loc[DiagnosisData['ImageFileName'] == imageName, 'Status'] = updated_status
-    DiagnosisData.to_csv(DiagnosisTrackerfilename)
+    DiagnosisData.to_csv(DiagnosisTrackerfilename,index=False)
     print("Status updated successfully")
     return "Status updated successfully"
     
